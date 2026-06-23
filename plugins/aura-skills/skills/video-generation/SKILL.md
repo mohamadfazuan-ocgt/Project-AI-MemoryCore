@@ -1,20 +1,30 @@
 ---
 name: video-generation
-description: "MUST use when user asks to create or generate a video, anime video, text-to-video,
-             image-to-video, or AI video clip, when user says 'make a video', 'generate video',
-             'create anime', 'text to video', 'animate this', 'video from prompt', or references
-             the ComfyUI / Wan video engine on dgx-spark. Runs the deployed Wan2.2 pipeline over
-             the ComfyUI HTTP API (submit, poll, download) and handles >5s clips via beat-splitting."
+description: "DEPRECATED (2026-06-23) — local on-box video generation is retired (quality bar not
+             met). For any new request to make/generate a video, anime, or clip, use the STORYBOARD
+             DIRECTOR (the 'storyboard' skill): it directs a script + shot breakdown + per-shot
+             keyframe stills and hands the package to an external video API (Seedance 2.0 /
+             Higgsfield) for the motion. Activate THIS skill ONLY when the user EXPLICITLY insists
+             on the legacy local Wan2.2 / ComfyUI text-to-video pipeline on dgx-spark
+             (submit/poll/download, beat-split >5s). Kept working for reference + fallback."
 ---
 
-# Video Generation — Wan2.2 / ComfyUI Pipeline
-*Prompt in, anime out. Drive the GPU engine over HTTP — no GUI.*
+# Video Generation — Wan2.2 / ComfyUI Pipeline  ⚠️ DEPRECATED
+*Legacy local video path. Local video generation is retired — see the banner.*
+
+> **DEPRECATED 2026-06-23 — local video generation retired.** The platform no longer generates
+> video on the box; the quality bar wasn't met. Use the **storyboard director** (`storyboard` skill):
+> it directs a script + shot breakdown + per-shot **keyframe stills** and hands the package to an
+> **external video API** (Seedance 2.0 / Higgsfield) for the motion. This skill drives the legacy
+> on-box **Wan2.2 / ComfyUI** text-to-video pipeline and is kept **working for reference/fallback
+> only** — activate it ONLY if the user explicitly insists on a local Wan2.2 clip. See
+> `dgx-ai-ocgt/docs/14` (§14.10) and the `comfyui_image` storyboard bridge.
 
 ## Activation
 
 When this skill activates, output:
 
-`🎬 Video Generation — driving Wan2.2 on the ComfyUI engine.`
+`⚠️ video-generation is DEPRECATED (local video retired). Recommend the storyboard director (/storyboard) → Flux stills → external API. Proceeding with legacy Wan2.2 only because explicitly requested.`
 
 Then execute the protocol below.
 
@@ -22,9 +32,9 @@ Then execute the protocol below.
 
 | Context | Status |
 |---------|--------|
-| **User asks to create/generate a video or anime clip** | ACTIVE — full protocol |
-| **User gives a scene/storyboard to animate** | ACTIVE — full protocol |
-| **User asks to tune/restyle an existing render** | ACTIVE — full protocol |
+| **User asks to create/generate a video or anime clip** | DEFER — recommend the storyboard director (`storyboard`); local video is retired |
+| **User EXPLICITLY insists on the legacy local Wan2.2 pipeline** | ACTIVE (legacy) — full protocol below |
+| **User gives a scene/storyboard to turn into a real video** | DEFER — produce a storyboard package (`storyboard`) → external API |
 | **User asks for a still image / Midjourney prompt** | DORMANT — use `image-prompt` |
 | **Non-video request** | DORMANT — do not activate |
 
@@ -132,3 +142,4 @@ KSampler: seed, steps 30, cfg 5, sampler euler, scheduler simple, denoise 1.0
 
 - **Lv.1** — Base: text-to-video + image-to-video over the ComfyUI HTTP API, 2D anime style profile, beat-splitting + stitch for >5s, learned-profile hook. (Origin: 2026-06-15, built from the dgx-spark Wan2.2 deployment + first anime fight-scene renders.)
 - **Lv.2** — Deployed bridge + driving discipline: the `comfyui_video` tool in the **openmontage** container (`aiplat-openmontage`, net `aiplat`, in-cluster `comfyui:8188`) wraps submit/poll/download — use it when composing via OpenMontage; raw clips still drive `:8188` directly. Added the heredoc driving rule (9) and the CUDA-poison / healthcheck-blind-spot + `node_errors` edge cases. Workflow graph proven valid on-box (`node_errors=={}`). See `dgx-ai-ocgt/docs/14`. (Origin: 2026-06-22, OpenMontage PATH-B integration + live bridge test.)
+- **Lv.3** — Deprecated (2026-06-23): local video generation retired in favour of the storyboard pipeline (`storyboard` director → `comfyui_image` Flux stills → external Seedance 2.0 / Higgsfield). This skill + the `comfyui_video` Wan2.2 bridge are kept working for reference/fallback only. See `dgx-ai-ocgt/docs/14` §14.10.
