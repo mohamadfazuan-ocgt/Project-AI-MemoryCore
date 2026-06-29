@@ -151,6 +151,7 @@ Build each shot's prompt as `lead + <character block> + <shot action> + tail`; p
 
 ## Level History
 
+- **Lv.3** — Pipeline Integration (2026-06-29): slots into the Seedance-side skill suite — takes `script-writer` scene breakdowns as input and routes the board through `continuity-director` (set / light / color-temp / props / physics lock + lint) before stills + handoff; defers identity to the Character Bible (`STORYBOARD-PROMPT-KIT`). (Origin: user "increase level all video generation skills", after forging script-writer + continuity-director the same day.)
 - **Lv.2** — Pivot (2026-06-23): retired local video composition; became the **storyboard director**.
   Directs script + shots + start/end keyframe prompts → `storyboard.json` → box renders stills via
   the new `comfyui_image` (Flux) bridge + `storyboard_gen.py` → package + ffmpeg animatic → handoff

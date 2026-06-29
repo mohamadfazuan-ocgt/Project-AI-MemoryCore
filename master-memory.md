@@ -112,6 +112,49 @@ I maintain my own memory through our conversations by:
 ```
 Traditional method if simple command doesn't work.
 
+## Installed Capabilities
+
+### Video Generation
+*Render MP4 video from descriptions via the Seedance API (BytePlus ModelArk).*
+- **Trigger**: "render a video", "generate video", "make a video", "animate this image"
+- **What it does**: Builds the prompt from what you type (no built-in persona); text-to-video + image-to-video; confirms cost via `--what-if-cost`; runs async submit→poll→download; saves an MP4.
+- **Helper**: `/Users/mohamadfazuanoc/.local/bin/invoke-video-gen.sh` (bash; needs `curl` + `jq`)
+- **Credentials**: pass `--env-file /Users/mohamadfazuanoc/Desktop/Projects/ai-memorycore/Feature/Video-Generation-System/.env` (or export `ARK_API_KEY`). Helper lives on PATH, away from `.env`, so `--env-file` is required for paid renders.
+- **Output folder**: `media-generation/video-generation/` (all rendered MP4s land here)
+- **Companion**: Continuity Director (locks set/light/props/physics before render), storyboard director (hands shot package to Seedance), Image Generation (animate a still), Library System (optional saved references)
+- **Cost**: video is expensive (~$0.05 / $0.10 / $0.23 per sec at 480p / 720p / 1080p) — cost gate mandatory; never auto-fire a paid render.
+
+### Script Writer
+*Idea → director's-notes scene breakdown (8–15 scenes), one Seedance 2.0 prompt line each. Stage 0 of the video pipeline.*
+- **Trigger**: "write a script", "script writing", "scene breakdown", "director's notes", "turn this idea into scenes", "script for my video/ad", "Seedance prompt"
+- **What it does**: Logline → structure template → 8–15 scenes, each with Subject / Action (one move, present tense) / Camera / Mood&Style / Audio → composes `[Subject]+[Action]+[Environment]+[Camera Movement]+[Mood/Style]+[Audio Direction]` per scene. Writes the creative only — does NOT lock continuity, identity, or render.
+- **Skill**: `plugins/aura-skills/skills/script-writer/SKILL.md` (Lv.2)
+- **Companion**: Continuity Director (locks the world next), Character Bible / STORYBOARD-PROMPT-KIT (identity), Video Generation + `storyboard-runner.sh` (renders)
+
+### Continuity Director
+*Lock the world, light, color-temp, props, physics & story-clock (narrative/temporal order) across every shot — the continuity-analysis pass BEFORE rendering.*
+- **Trigger**: "check/fix continuity", "lock lighting/color/set/props/physics", "make my scenes match", "analyze my storyboard/script", or any multi-scene storyboard/script handed in for an AI video
+- **What it does**: Parses the script into beats; builds Environment / Lighting-Kelvin / Prop / Physics / Spatial continuity bibles; lints for breaks (time-of-day & color-temp jumps, prop pop-in/out, 180° / screen-direction flips, scale/physics errors) with 🔴🟡🟢 severity; rewrites every beat with continuity tags. Does NOT render — emits a corrected `.spec` / `storyboard.json`. Character identity is the separate Character Bible's job.
+- **Skill**: `plugins/aura-skills/skills/continuity-director/SKILL.md` (Lv.3)
+- **Companion**: STORYBOARD-PROMPT-KIT (Character Bible — the one domain it defers), Video Generation + `storyboard-runner.sh` (renders the corrected spec)
+
+### Render Critic
+*Learn from finished renders cheaply — analyse once, never re-pay the vision cost.*
+- **Trigger**: after a render, "learn from this video/render", "critique the video", "why does it look off", "improve future renders", "analyse the output"
+- **What it does**: Cache-first — reads `media-generation/RENDER-LESSONS.md`; vision-verifies ONLY when warranted (new scenario / reported issue / paid final pass) via ONE contact sheet (not N clip reads); distils generalised `[trigger]→[failure]→[fix]` lessons; dedupes/counts/promotes to a Pre-flight checklist; feeds forward to Script Writer + Continuity Director so future specs pre-correct **without** re-analysis.
+- **Knowledge base**: `media-generation/RENDER-LESSONS.md` — the token-cheap cache the whole pipeline consults
+- **Skill**: `plugins/aura-skills/skills/render-critic/SKILL.md` (Lv.1)
+- **Companion**: Continuity Director + Script Writer (consume the lessons), `storyboard-runner.sh` (re-render a fixed beat), Post-Mortem (major lessons)
+
+### Image Generation
+*Render PNG images from descriptions via the OpenAI gpt-image API.*
+- **Trigger**: "render an image", "generate image", "make an image of", "render this prompt"
+- **What it does**: Builds the prompt from what you type (no built-in persona); confirms cost; calls the gpt-image API; saves a PNG.
+- **Helper**: `/Users/mohamadfazuanoc/.local/bin/invoke-image-gen.sh` (bash; needs `curl` + `jq`)
+- **Credentials**: ✅ set in `Feature/Image-Generation-System/.env` (gitignored). Pass `--env-file /Users/mohamadfazuanoc/Desktop/Projects/ai-memorycore/Feature/Image-Generation-System/.env` (or export `OPENAI_API_KEY`). No keyless dry-run — confirm cost in-skill before any render.
+- **Output folder**: `media-generation/image-generation/`
+- **Companion**: Image Prompt System (craft the prompt), Library System (saved references), Video Generation (animate a still)
+
 ## Memory System Status
 - **Architecture**: Universal AI Memory Template v1.0
 - **Core Components**: 4 essential files for instant loading
