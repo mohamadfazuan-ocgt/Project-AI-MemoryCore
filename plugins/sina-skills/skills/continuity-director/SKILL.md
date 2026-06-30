@@ -11,7 +11,7 @@ description: "MUST use when the user hands a multi-scene storyboard, shot list, 
              direction flips, scale/physics errors), and rewrites every beat with continuity tags.
              Character consistency is the separate STORYBOARD-PROMPT-KIT job — this skill owns
              everything else. Pairs with media-generation/storyboard-runner.sh (Seedance i2v) and the
-             storyboard skill; it does NOT render — it emits a corrected .spec / storyboard.json."
+             storyboard skill; it does NOT render — it emits a corrected .spec for storyboard-runner.sh (Seedance i2v)."
 ---
 
 # Continuity Director — The World Must Match, Shot to Shot
@@ -86,10 +86,10 @@ Author the lock tables. Each entry is written **once** and reused **verbatim** d
 ### Step 5: Rewrite (inject the locks)
 - [ ] **Prepend a CONTINUITY block** to the `@bible`: world look + global light/grade + recurring-location locks + persistent props.
 - [ ] **Append per-beat continuity tags** to each beat: `LOCATION | TIME | LIGHT (dir) | TEMP (K) | PROPS | SCREEN-DIR`.
-- [ ] Emit the corrected artifact in the target format: a `storyboard-runner` **`.spec`** (`@bible` + `@beats`) or a **`storyboard.json`**.
+- [ ] Emit the corrected artifact: a `storyboard-runner` **`.spec`** (`@bible` + `@beats`) for Seedance i2v — or apply the same continuity locks + per-beat tags directly to the `storyboard` skill's storyboard **document**.
 
 ### Step 6: Handoff
-- [ ] Hand the corrected `.spec` to `media-generation/storyboard-runner.sh` (Seedance i2v, character sheet as `--reference-image`), or `storyboard.json` to the `storyboard` skill.
+- [ ] Hand the corrected `.spec` to `media-generation/storyboard-runner.sh` (Seedance i2v, character sheet as `--reference-image`). (Local ComfyUI/OpenMontage render via the `storyboard` skill is retired — that skill is now a doc-only director.)
 - [ ] Report **what was locked** and **what was fixed** (the Break Report). Offer a re-lint after edits.
 
 ---
@@ -194,7 +194,7 @@ Run this in both the Coherence Gate and the manual Lint. **Seedance prompt-craft
 3. **Surface creative forks, don't average** (Rule 7). A time-of-day or location change that might be intentional → ask/offer, don't normalize it away.
 4. **Repeat verbatim.** Same location/prop reused word-for-word across beats. Re-describing loosely = drift.
 5. **Respect the timeline.** Flag every time-of-day / Kelvin jump in a continuous sequence (the headline bug: night inside an afternoon).
-6. **Hand off, don't render.** Emit the corrected `.spec` / `storyboard.json`; defer rendering to `storyboard-runner.sh` / the `storyboard` skill.
+6. **Hand off, don't render.** Emit the corrected `.spec`; defer rendering to `storyboard-runner.sh` (Seedance i2v).
 7. **Bake continuity into the POSITIVE prompt.** Seedance (BytePlus ModelArk) has **no negative-prompt field** — locks must live in the prompt text, not a neg list.
 8. **Fail loud** (Rule 12). If the script lacks the info to lock a variable (no stated time-of-day, ambiguous location), say so and ask — don't fabricate a value silently.
 9. **Consult the lessons cache.** Read `media-generation/RENDER-LESSONS.md` and fold its Pre-flight checklist into the lint + locks — known render failures get pre-corrected from text, not re-discovered by eye. The `render-critic` skill keeps that file current.

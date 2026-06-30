@@ -4,3 +4,13 @@
 
 # Claude Code settings
 .claude/settings.local.json
+
+# Secrets — never commit API keys (.env.example stays tracked)
+.env
+*.env
+
+video-generation/*
+
+# Local media + project workspaces (not tracked)
+media-generation/
+projects/

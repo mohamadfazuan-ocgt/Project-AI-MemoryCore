@@ -121,21 +121,28 @@ Traditional method if simple command doesn't work.
 - **Helper**: `/Users/mohamadfazuanoc/.local/bin/invoke-video-gen.sh` (bash; needs `curl` + `jq`)
 - **Credentials**: pass `--env-file /Users/mohamadfazuanoc/Desktop/Projects/ai-memorycore/Feature/Video-Generation-System/.env` (or export `ARK_API_KEY`). Helper lives on PATH, away from `.env`, so `--env-file` is required for paid renders.
 - **Output folder**: `media-generation/video-generation/` (all rendered MP4s land here)
-- **Companion**: Continuity Director (locks set/light/props/physics before render), storyboard director (hands shot package to Seedance), Image Generation (animate a still), Library System (optional saved references)
+- **Companion**: Continuity Director (locks set/light/props/physics before render), storyboard director (photo + story → storyboard document, handed to Seedance), Image Generation (animate a still), Library System (optional saved references)
 - **Cost**: video is expensive (~$0.05 / $0.10 / $0.23 per sec at 480p / 720p / 1080p) — cost gate mandatory; never auto-fire a paid render.
 
 ### Script Writer
 *Idea → director's-notes scene breakdown (8–15 scenes), one Seedance 2.0 prompt line each. Stage 0 of the video pipeline.*
 - **Trigger**: "write a script", "script writing", "scene breakdown", "director's notes", "turn this idea into scenes", "script for my video/ad", "Seedance prompt"
 - **What it does**: Logline → structure template → 8–15 scenes, each with Subject / Action (one move, present tense) / Camera / Mood&Style / Audio → composes `[Subject]+[Action]+[Environment]+[Camera Movement]+[Mood/Style]+[Audio Direction]` per scene. Writes the creative only — does NOT lock continuity, identity, or render.
-- **Skill**: `plugins/aura-skills/skills/script-writer/SKILL.md` (Lv.2)
+- **Skill**: `plugins/sina-skills/skills/script-writer/SKILL.md` (Lv.2)
 - **Companion**: Continuity Director (locks the world next), Character Bible / STORYBOARD-PROMPT-KIT (identity), Video Generation + `storyboard-runner.sh` (renders)
+
+### Storyboard Director
+*Reference photo + story → a production-ready storyboard DOCUMENT (shot-by-shot, prose fields per scene). Document only — no images, no prompts, no render.*
+- **Trigger**: "storyboard", "make a storyboard", "storyboard this", "shot list", "scene breakdown", "direct a video", "previz", "turn this photo + story into scenes"
+- **What it does**: Analyzes the uploaded photo → frozen CHARACTER REFERENCE (permanent character lock); follows the story exactly (beginning→middle→climax→ending); emits ONE document — Title / Genre / Duration / Character Reference + per-scene Shot Type, Camera Angle, Location, Time, Characters, Visual Description, Action, Expression, Body Language, Objects, Background, Mood, Dialogue, SFX, Transition. Fields shaped for Seedance handoff (Global Character Lock at prompt top, lighting arc, end-pose / last-frame chaining). DOES NOT render.
+- **Skill**: `plugins/sina-skills/skills/storyboard/SKILL.md` (Lv.4 — doc-only; local ComfyUI/OpenMontage render retired 2026-06-30)
+- **Companion**: Script Writer (scenes from a bare idea, no photo), Continuity Director (lock world/light/props across scenes), STORYBOARD-PROMPT-KIT (Character Bible), Video Generation + `storyboard-runner.sh` (Seedance i2v render)
 
 ### Continuity Director
 *Lock the world, light, color-temp, props, physics & story-clock (narrative/temporal order) across every shot — the continuity-analysis pass BEFORE rendering.*
 - **Trigger**: "check/fix continuity", "lock lighting/color/set/props/physics", "make my scenes match", "analyze my storyboard/script", or any multi-scene storyboard/script handed in for an AI video
-- **What it does**: Parses the script into beats; builds Environment / Lighting-Kelvin / Prop / Physics / Spatial continuity bibles; lints for breaks (time-of-day & color-temp jumps, prop pop-in/out, 180° / screen-direction flips, scale/physics errors) with 🔴🟡🟢 severity; rewrites every beat with continuity tags. Does NOT render — emits a corrected `.spec` / `storyboard.json`. Character identity is the separate Character Bible's job.
-- **Skill**: `plugins/aura-skills/skills/continuity-director/SKILL.md` (Lv.3)
+- **What it does**: Parses the script into beats; builds Environment / Lighting-Kelvin / Prop / Physics / Spatial continuity bibles; lints for breaks (time-of-day & color-temp jumps, prop pop-in/out, 180° / screen-direction flips, scale/physics errors) with 🔴🟡🟢 severity; rewrites every beat with continuity tags. Does NOT render — emits a corrected `.spec` for `storyboard-runner.sh` (Seedance i2v). Character identity is the separate Character Bible's job.
+- **Skill**: `plugins/sina-skills/skills/continuity-director/SKILL.md` (Lv.3)
 - **Companion**: STORYBOARD-PROMPT-KIT (Character Bible — the one domain it defers), Video Generation + `storyboard-runner.sh` (renders the corrected spec)
 
 ### Render Critic
@@ -143,7 +150,7 @@ Traditional method if simple command doesn't work.
 - **Trigger**: after a render, "learn from this video/render", "critique the video", "why does it look off", "improve future renders", "analyse the output"
 - **What it does**: Cache-first — reads `media-generation/RENDER-LESSONS.md`; vision-verifies ONLY when warranted (new scenario / reported issue / paid final pass) via ONE contact sheet (not N clip reads); distils generalised `[trigger]→[failure]→[fix]` lessons; dedupes/counts/promotes to a Pre-flight checklist; feeds forward to Script Writer + Continuity Director so future specs pre-correct **without** re-analysis.
 - **Knowledge base**: `media-generation/RENDER-LESSONS.md` — the token-cheap cache the whole pipeline consults
-- **Skill**: `plugins/aura-skills/skills/render-critic/SKILL.md` (Lv.1)
+- **Skill**: `plugins/sina-skills/skills/render-critic/SKILL.md` (Lv.1)
 - **Companion**: Continuity Director + Script Writer (consume the lessons), `storyboard-runner.sh` (re-render a fixed beat), Post-Mortem (major lessons)
 
 ### Image Generation
