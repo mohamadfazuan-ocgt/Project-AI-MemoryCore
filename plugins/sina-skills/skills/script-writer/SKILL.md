@@ -65,7 +65,7 @@ Then compose each scene into one **Seedance 2.0 prompt line** using the formula:
 ## Protocol
 
 ### Step 1: Parse the brief
-- [ ] **Subject/product**, **goal/message** (what the viewer should feel/do), **genre/tone**, **platform + aspect** (default 16:9), **target length** → **scene count** (~5s/shot → 8–15 scenes ≈ 40–75s).
+- [ ] **Subject/product**, **goal/message** (what the viewer should feel/do), **genre/tone**, **platform + aspect** (default 16:9), **target length** → **scene count** (avg ~5s/shot but durations vary per beat → 8–15 scenes ≈ 40–75s).
 - [ ] If goal, tone, or length is missing → **ask before inventing** (Rule: fail loud).
 
 ### Step 2: Logline + structure (the spine)
@@ -153,7 +153,7 @@ Hand these to `continuity-director` to lock the set/light/props (e.g. keep S4 in
 When asked to "make the spec" / "render-ready" (or when pushing to the renderer), convert the breakdown straight into a `storyboard-runner` spec — no manual retyping:
 - **`@bible`** ← the global look + subject in plain words, ONE paragraph reused identically every line (medium · lighting · palette · the recurring subject). Every beat inherits it.
 - **`@beats`** ← one line per scene: `<Action as continuous present-tense motion>  ||  <Camera framing + movement>  ||  <seconds>`.
-- **Durations** ← default `5`; bump to `6–8` only for a beat needing a longer move (reveal/crane). Sum = runtime.
+- **Durations** ← **pace to the beat, never a flat 5s.** Short (`3–5`) for action / quick cuts / rising tension; long (`8–10`) for establishing shots, dialogue, emotional holds, reveals/cranes. Choose each beat's seconds by what the shot is *doing*. Sum = runtime.
 - Then route the spec through `continuity-director` (lock set/light/props) → `storyboard-runner.sh`.
 ```
 @beats
@@ -167,7 +167,7 @@ the same schoolgirl is ringed by three teenage bullies who close in and block he
 4. **Subject = role + key visual.** Defer the exact face/outfit lock to the Character Bible; don't invent identity details that will drift.
 5. **Always write Audio** — Seedance 2.0 generates sound (`generate_audio:true`); silent-by-omission is a mistake unless silence is the intent.
 6. **Every scene ends as a Seedance formula line** (`[Subject]+[Action]+[Environment]+[Camera Movement]+[Mood/Style]+[Audio Direction]`).
-7. **Scene count 8–15**, mapped to length (~5s/shot). Flag if the brief implies fewer/more.
+7. **Scene count 8–15**, mapped to length (avg ~5s/shot; **per-beat duration varies by pacing** — see Lv.2 Durations). Flag if the brief implies fewer/more.
 8. **Hand off, don't render** — output the breakdown; route to `continuity-director` then `storyboard-runner`. Never call the paid render from here.
 9. **Fail loud** — missing goal/tone/length → ask, don't fabricate.
 10. **Consult the lessons cache.** Before emitting the spec, read `media-generation/RENDER-LESSONS.md` and apply its Pre-flight checklist (cheap text) — the script is pre-corrected for known Seedance behaviour with no vision pass needed.

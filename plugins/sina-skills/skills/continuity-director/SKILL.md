@@ -86,6 +86,7 @@ Author the lock tables. Each entry is written **once** and reused **verbatim** d
 ### Step 5: Rewrite (inject the locks)
 - [ ] **Prepend a CONTINUITY block** to the `@bible`: world look + global light/grade + recurring-location locks + persistent props.
 - [ ] **Append per-beat continuity tags** to each beat: `LOCATION | TIME | LIGHT (dir) | TEMP (K) | PROPS | SCREEN-DIR`.
+- [ ] **Preserve each beat's `seconds`** from the incoming script/storyboard — pacing is the writer's call (short for action, long for dialogue/establishing); carry it through unchanged. Only adjust a beat's duration if a continuity fix demands it (e.g. a lengthened move to sell a relocation), and flag it.
 - [ ] Emit the corrected artifact: a `storyboard-runner` **`.spec`** (`@bible` + `@beats`) for Seedance i2v — or apply the same continuity locks + per-beat tags directly to the `storyboard` skill's storyboard **document**.
 
 ### Step 6: Handoff

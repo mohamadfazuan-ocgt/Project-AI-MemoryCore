@@ -81,6 +81,7 @@ paraphrase the appearance between scenes — reuse the exact description. (This 
 
 ### Step 3: Direct each scene (fill every field)
 - [ ] Author all fields (format below) for each scene.
+- [ ] **Set Duration per scene by pacing** — short (~3–5s) for action / quick cuts, long (~8–10s) for dialogue / establishing / emotional holds. Never default every scene to a flat 5s.
 - [ ] Keep a natural **lighting / time-of-day arc** across scenes (sunrise → afternoon → sunset →
       night, unless the story dictates otherwise).
 - [ ] End each scene's **Transition** by stating the pose + facing direction the next scene opens
@@ -96,10 +97,11 @@ paraphrase the appearance between scenes — reuse the exact description. (This 
 ```
 TITLE:
 GENRE:
-ESTIMATED DURATION:
+ESTIMATED DURATION:    (sum of per-scene Durations)
 CHARACTER REFERENCE:   (from the uploaded photo — face, hairstyle, skin tone, body build, age, distinctive features)
 
 SCENE 1
+Duration:            (clip length in seconds — pace to the beat: ~3–5s action/quick-cut, ~8–10s dialogue/establishing/emotional hold; NOT a flat 5s)
 Shot Type:           (Wide / Medium / Close-Up / Extreme Close-Up / Over-the-Shoulder / Tracking / POV / Drone / etc.)
 Camera Angle:        (Eye Level / High / Low / Dutch / Top View / etc.)
 Location:
