@@ -12,5 +12,6 @@
 video-generation/*
 
 # Local media + project workspaces (not tracked)
-media-generation/
+media-generation/*
+!media-generation/STORYBOARD-PROMPT-KIT.md
 projects/
