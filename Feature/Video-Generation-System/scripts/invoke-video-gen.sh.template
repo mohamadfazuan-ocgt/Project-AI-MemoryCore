@@ -56,6 +56,8 @@ POLL_SECONDS="10"
 TIMEOUT_SECONDS="600"
 ENV_FILE=""
 WHAT_IF_COST="false"
+LEDGER=""
+NO_LEDGER="false"
 
 # ------------------------------------------------------------
 # Parse arguments
@@ -78,13 +80,15 @@ while [[ $# -gt 0 ]]; do
     --poll-seconds)    POLL_SECONDS="$2";    shift 2 ;;
     --timeout-seconds) TIMEOUT_SECONDS="$2"; shift 2 ;;
     --env-file)        ENV_FILE="$2";        shift 2 ;;
+    --ledger)          LEDGER="$2";          shift 2 ;;
+    --no-ledger)       NO_LEDGER="true";     shift 1 ;;
     --what-if-cost)    WHAT_IF_COST="true";  shift 1 ;;
     *) echo "Unknown argument: $1" >&2; exit 1 ;;
   esac
 done
 
 if [[ -z "$PROMPT" || -z "$OUTFILE" ]]; then
-  echo "Usage: invoke-video-gen.sh --prompt <text> --outfile <path.mp4> [--resolution 1080p] [--duration 5] [--first-frame <path|url>] [--what-if-cost]" >&2
+  echo "Usage: invoke-video-gen.sh --prompt <text> --outfile <path.mp4> [--resolution 1080p] [--duration 5] [--first-frame <path|url>] [--ledger <path>] [--no-ledger] [--what-if-cost]" >&2
   exit 1
 fi
 
@@ -171,18 +175,27 @@ to_data_uri() {
     webp)      mime="image/webp" ;;
     *) echo "Unsupported image type '.$ext' (use png/jpg/webp): $p" >&2; exit 1 ;;
   esac
-  printf 'data:%s;base64,%s' "$mime" "$(base64 -w0 "$p" 2>/dev/null || base64 "$p" | tr -d '\n')"
+  # Portable base64: stdin form works on GNU (-w0 unavailable on BSD/macOS) and
+  # BSD (bare-filename arg is rejected as "invalid argument"). tr strips any wrap.
+  printf 'data:%s;base64,%s' "$mime" "$(base64 < "$p" | tr -d '\n')"
 }
 
 # ------------------------------------------------------------
 # Build the content array (text + optional image conditioning)
+# Large payloads (base64 images, final body) travel via temp FILES,
+# never argv — a multi-MB --arg/-d string blows the OS ARG_MAX limit
+# ("jq: Argument list too long"). Requires jq >= 1.6 (--rawfile).
 # ------------------------------------------------------------
+TMP_PAYLOAD_DIR="$(mktemp -d)"
+trap 'rm -rf "$TMP_PAYLOAD_DIR"' EXIT
+
 CONTENT="$(jq -nc --arg text "$PROMPT" '[{type:"text", text:$text}]')"
 add_image() {
-  local uri role
-  uri="$(to_data_uri "$1")"; role="$2"
-  CONTENT="$(printf '%s' "$CONTENT" | jq -c --arg url "$uri" --arg role "$role" \
+  local role="$2" urifile="$TMP_PAYLOAD_DIR/uri.$$.$RANDOM"
+  to_data_uri "$1" > "$urifile"
+  CONTENT="$(printf '%s' "$CONTENT" | jq -c --rawfile url "$urifile" --arg role "$role" \
     '. + [{type:"image_url", image_url:{url:$url}, role:$role}]')"
+  rm -f "$urifile"
 }
 [[ -n "$FIRST_FRAME" ]] && add_image "$FIRST_FRAME" "first_frame"
 [[ -n "$LAST_FRAME"  ]] && add_image "$LAST_FRAME"  "last_frame"
@@ -191,19 +204,20 @@ for ref in "${REFERENCE_IMAGES[@]:-}"; do
 done
 
 # ------------------------------------------------------------
-# Assemble the submit body
+# Assemble the submit body (CONTENT via stdin, result to a file —
+# both can exceed ARG_MAX once images are embedded)
 # ------------------------------------------------------------
-BODY="$(jq -nc \
+BODY_FILE="$TMP_PAYLOAD_DIR/body.json"
+printf '%s' "$CONTENT" | jq -c \
   --arg model "$MODEL" \
-  --argjson content "$CONTENT" \
   --arg resolution "$RESOLUTION" \
   --arg ratio "$ASPECT_RATIO" \
   --argjson duration "$DURATION" \
   --argjson audio "$AUDIO" \
   --argjson watermark "$WATERMARK" \
   --argjson seed "$SEED" \
-  '{model:$model, content:$content, resolution:$resolution, ratio:$ratio, duration:$duration, generate_audio:$audio, watermark:$watermark}
-   + (if $seed >= 0 then {seed:$seed} else {} end)')"
+  '{model:$model, content:., resolution:$resolution, ratio:$ratio, duration:$duration, generate_audio:$audio, watermark:$watermark}
+   + (if $seed >= 0 then {seed:$seed} else {} end)' > "$BODY_FILE"
 
 mkdir -p "$(dirname "$OUTFILE")"
 START="$(date +%s)"
@@ -213,7 +227,7 @@ START="$(date +%s)"
 # ------------------------------------------------------------
 SUBMIT_RESP="$(curl -sS -w $'\n%{http_code}' -X POST "$API_BASE" \
   -H "Authorization: Bearer ${API_KEY}" -H "Content-Type: application/json" \
-  -d "$BODY" 2>&1 || true)"
+  -d @"$BODY_FILE" 2>&1 || true)"
 SUBMIT_CODE="$(printf '%s' "$SUBMIT_RESP" | tail -n1)"
 SUBMIT_BODY="$(printf '%s' "$SUBMIT_RESP" | sed '$d')"
 
@@ -260,6 +274,18 @@ curl -sS -L -o "$OUTFILE" "$VIDEO_URL" || { echo "Video download failed (task $T
 
 END="$(date +%s)"
 ELAPSED=$((END - START))
+
+# Append spend record to the ledger (default: alongside the output file).
+# TSV: timestamp, cost_usd, resolution, duration_s, task_id, outfile.
+if [[ "$NO_LEDGER" != "true" ]]; then
+  LEDGER_FILE="${LEDGER:-$(dirname "$OUTFILE")/.spend-ledger.tsv}"
+  if [[ ! -f "$LEDGER_FILE" ]]; then
+    printf 'timestamp\tcost_usd\tresolution\tduration_s\ttask_id\toutfile\n' > "$LEDGER_FILE" 2>/dev/null || true
+  fi
+  printf '%s\t%s\t%s\t%s\t%s\t%s\n' \
+    "$(date +%Y-%m-%dT%H:%M:%S)" "$COST_ESTIMATE" "$RESOLUTION" "$DURATION" "$TASK_ID" "$OUTFILE" \
+    >> "$LEDGER_FILE" 2>/dev/null || true
+fi
 
 echo "saved_path: $OUTFILE"
 echo "cost_estimate_usd: ~$COST_ESTIMATE   elapsed_seconds: ${ELAPSED}   model: $MODEL   resolution: $RESOLUTION   duration_seconds: $DURATION   task_id: $TASK_ID"

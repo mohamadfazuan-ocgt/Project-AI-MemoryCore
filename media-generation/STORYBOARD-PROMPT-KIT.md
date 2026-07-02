@@ -98,9 +98,9 @@ Labels under each view, clean spacing, consistent proportions. 4:3.
 
 ## Stage 2 — Storyboard (beats + camera)
 
-> Goal: N panels telling the sequence. Each panel re-uses the bible and adds a **shot size + angle +
-> lens + camera move + action + expression**. The camera move is what you'll carry into the video
-> prompt later.
+> Goal: N panels telling the sequence. Each panel re-uses the bible and adds a **timecode + shot size +
+> angle + lens + camera move + action + expression**. The camera move and timecode are what you'll
+> carry into the video prompt later.
 
 **Header (paste once, top of the prompt):**
 
@@ -114,23 +114,38 @@ CHARACTER BIBLE: [paste the exact bible block from Stage 1]
 **Per-panel line (repeat for each panel):**
 
 ```
-PANEL [n] — SHOT: [shot size] | ANGLE: [camera angle] | LENS: [lens] | MOVE: [camera movement] |
-ACTION: [what the character does] | EXPRESSION: [face/emotion] | CAPTION: "[short caption]"
+PANEL [n] — TIME: [mm:ss–mm:ss] ([n]s — [why this length]) | SHOT: [shot size] | ANGLE: [camera angle] |
+LENS: [lens] | MOVE: [camera movement] | ACTION: [what the character does] |
+EXPRESSION: [face/emotion] | CAPTION: "[short caption]"
 ```
+
+**Timecode & duration — analyze the beat, never default to a flat 5s.** Read what the shot is *doing*
+and size it:
+
+| Beat type | Seconds | Why |
+|-----------|---------|-----|
+| Impact / quick cut / explosive action | 3–4 | motion is the message; longer = mush |
+| Standard motion beat (walk, turn, gesture) | 5 | the workhorse default |
+| Establishing / wide reveal / crane or orbit | 6–8 | the eye needs time to read the space |
+| Dialogue / emotional hold / slow push-in | 8–10 | the face is the shot; let it land |
+
+Timecodes are **cumulative from 00:00** — each panel starts where the previous one ends, and the last
+panel's end time = total runtime. Sanity-check the sum against your target length *before* rendering.
 
 **Worked example (3 of 8 panels):**
 
 ```
-PANEL 1 — SHOT: full shot | ANGLE: eye-level | LENS: 35mm | MOVE: slow push-in |
-ACTION: settles into a grounded ready stance, recentering | EXPRESSION: calm, breathing |
-CAPTION: "Re-centering."
+PANEL 1 — TIME: 00:00–00:08 (8s — calm emotional hold, opener) | SHOT: full shot | ANGLE: eye-level |
+LENS: 35mm | MOVE: slow push-in | ACTION: settles into a grounded ready stance, recentering |
+EXPRESSION: calm, breathing | CAPTION: "Re-centering."
 
-PANEL 5 — SHOT: medium shot | ANGLE: low angle | LENS: 50mm | MOVE: whip-pan follow |
-ACTION: explosive keris thrust, crisp body snap | EXPRESSION: fierce focus |
-CAPTION: "Explosive strike."
+PANEL 5 — TIME: 00:24–00:27 (3s — explosive impact beat) | SHOT: medium shot | ANGLE: low angle |
+LENS: 50mm | MOVE: whip-pan follow | ACTION: explosive keris thrust, crisp body snap |
+EXPRESSION: fierce focus | CAPTION: "Explosive strike."
 
-PANEL 6 — SHOT: wide shot | ANGLE: low angle | LENS: 24mm | MOVE: arcing crane up |
-ACTION: dynamic aerial backflip, sash trailing | EXPRESSION: controlled | CAPTION: "Aerial transition."
+PANEL 6 — TIME: 00:27–00:32 (5s — dynamic transition move) | SHOT: wide shot | ANGLE: low angle |
+LENS: 24mm | MOVE: arcing crane up | ACTION: dynamic aerial backflip, sash trailing |
+EXPRESSION: controlled | CAPTION: "Aerial transition."
 ```
 
 ---
@@ -143,7 +158,7 @@ ACTION: dynamic aerial backflip, sash trailing | EXPRESSION: controlled | CAPTIO
 [Paste the Character Bible verbatim].
 MOTION: [describe the single beat as continuous motion].
 CAMERA: [the MOVE from that panel — push-in / orbit / crane / tracking / handheld] + [pacing: calm vs explosive].
-[duration] seconds, [resolution], [aspect ratio], cinematic motion blur.
+[the panel's TIME duration] seconds, [resolution], [aspect ratio], cinematic motion blur.
 ```
 
 **What to feed the video model:**
@@ -158,9 +173,38 @@ CAMERA: [the MOVE from that panel — push-in / orbit / crane / tracking / handh
 **Hard-won gotchas:**
 - **Photoreal faces are rejected** as video input by many providers (real-person filter). Stylize at
   Stage 1. (Being AI-generated does **not** exempt you — the filter judges the pixels, not the origin.)
+- **Downscale reference images before feeding.** Raw sheet exports (1.5–3 MB PNG) choke many pipelines
+  (payload/arg limits — including this repo's helper) and upload slowly. One command:
+  `sips -Z 1024 -s format jpeg -s formatOptions 82 sheet.png --out sheet-ref.jpg` → ~200 KB, identity
+  intact at 480p–1080p render. Aim ≤1024px / ≤500 KB per reference.
+- **Famous-genre prompts summon famous IP.** Giant-monster / superhero / mecha prompts make the model
+  draw Kong/Ultraman/Marvel-adjacent designs *on its own* → the provider's output copyright filter
+  rejects the finished video. Renaming characters does NOT fix it — the filter judges pixels, not names.
+  Fix: design an ORIGINAL character sheet (Stage 1) and anchor it as reference / first frame; the model
+  then can't drift to the famous look.
 - **One beat per clip.** Cramming 8 beats into one 5–10s render = blurry, mushy motion.
 - **Keep aspect ratio fixed** across sheet → storyboard → video, or the framing jumps.
 - **Carry the camera move forward.** The panel's `MOVE` becomes the video's `CAMERA` line.
+- **Carry the timecode forward.** The panel's `TIME` duration is the clip's render length — don't
+  re-flatten everything back to 5s at render time. (Seedance/ModelArk multi-shot: the same cumulative
+  `[mm:ss–mm:ss]` timecodes drop straight into a single timecoded multi-shot prompt.)
+
+**Budget habits (paid renders):**
+- **Dry-run the cost first** (`--what-if-cost` in this repo's helper; otherwise check your provider's
+  per-second pricing). Know the number before you fire.
+- **The first good cut is the keeper.** Don't re-render per tweak — collect every note, batch them into
+  ONE re-render. The analyze/edit loop burns money and time faster than it improves the clip.
+- **Moderation-failed renders bill $0** (Seedance) — a rejected video costs nothing, so fix the prompt
+  and go again without budget guilt.
+
+**Advanced — one-take multi-shot (Seedance 2.0 / ModelArk):**
+Instead of one clip per beat, paste ALL panels into a single prompt: Character Bible at top, then each
+beat on its own line with its cumulative `[mm:ss–mm:ss]` timecode, camera move named per beat (the
+camera line is the cut glue), sheet attached as `reference_image`, total runtime as the duration param.
+One render = the whole sequence with built-in cuts. Verified here: a 15-second two-character comedy
+one-take from a single reference sheet — identity held every frame. Trade-off: one long render is
+cheaper and stitch-free vs per-beat clips, but a bad beat means re-rendering the whole take — so
+storyboard tightly first.
 
 ---
 
@@ -202,7 +246,7 @@ MOTION: the two macaws rocket side by side through the jungle, banking hard arou
 CAMERA: tracking-follow locked to the birds — camera flies alongside at their speed; birds sharp and
 centered, jungle canopy streaking past in parallax. Explosive pacing. Shallow DOF. Cinematic motion blur.
 LIGHT: god-rays breaking through the canopy + soft atmospheric haze.
-5 seconds, 864x496, 16:9.
+5 seconds (explosive race beat — standard motion length), 864x496, 16:9.
 ```
 
 ---
@@ -240,9 +284,10 @@ dolly · crane up/down · handheld · tracking follow · whip-pan.
 
 1. Write the **Character Bible** once. Make the style **stylized, not photoreal**.
 2. Generate a **turnaround sheet** (Stage 1). Save it — it's your reference image forever.
-3. Storyboard with **one camera spec per panel** (Stage 2). Change only action + camera.
+3. Storyboard with **one camera spec + one timecode per panel** (Stage 2). Change only action + camera.
+   Size each panel's seconds to the beat (impact 3–4s · standard 5s · establishing 6–8s · emotional 8–10s).
 4. Animate **one beat per clip** (Stage 3): feed the sheet as reference, the panel as first frame,
-   bible + camera move as the prompt.
+   bible + camera move as the prompt, the panel's TIME as the clip length.
 5. Re-use the **same seed** and **attach the sheet** on every generation.
 6. ⭐ For video that **doesn't look AI**: bolt on the cinematic-motion preset — camera *tracks with* the
    subject, background streaks past, cinematic motion blur, god-rays. Speed = background velocity, not post.

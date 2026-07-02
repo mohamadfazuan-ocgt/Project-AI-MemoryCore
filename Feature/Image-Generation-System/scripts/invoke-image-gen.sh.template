@@ -66,7 +66,7 @@ get_dotenv_key() {
   [[ -f "$file" ]] || return 1
   # First non-comment match; strip surrounding quotes and whitespace
   local val
-  val="$(grep -E "^\s*${key}\s*=" "$file" 2>/dev/null | grep -v '^\s*#' | head -n1 | sed -E "s/^\s*${key}\s*=\s*//; s/^[\"']//; s/[\"']\s*$//; s/\s+$//")"
+  val="$(grep -E "^[[:space:]]*${key}[[:space:]]*=" "$file" 2>/dev/null | grep -v '^[[:space:]]*#' | head -n1 | sed -E "s/^[[:space:]]*${key}[[:space:]]*=[[:space:]]*//; s/^[\"']//; s/[\"'][[:space:]]*$//; s/[[:space:]]+$//")"
   [[ -n "$val" ]] || return 1
   printf '%s' "$val"
 }
