@@ -7,6 +7,7 @@
 - **Communication Preference**: Terse / caveman-ultra — fragments, arrows for causality, no filler; normal prose for code/commits/security
 - **Primary Focus Areas**: Full-stack engineering — Java Spring Boot (backend) + React JS (frontend); plus infrastructure & deployment guidance
 - **Goals & Priorities**: Ship production-grade full-stack apps; wants Sina fluent in his stack and able to guide infra (containers, CI/CD, cloud, security)
+- **Location / timezone**: Malaysia — MYT (UTC+8). Deep-work mornings.
 
 ## Communication Patterns
 
@@ -47,7 +48,7 @@
 
 **Current Areas**:
 - **Field/Industry**: Software engineering @ OC Global Tech
-- **Key Skills**: Java Spring Boot (REST APIs, JPA/Hibernate, Spring Security), React JS (hooks, state mgmt, component design)
+- **Key Skills**: Java 21 + Spring Boot 3.x / Maven (REST APIs, JPA/Hibernate, Spring Security 6, Jakarta ns, virtual threads, records/sealed); Next.js + TypeScript frontend (App Router, TanStack Query for server-state + Context for client-state). Solo dev, high rigor / TDD (test-first).
 - **Learning Goals**: Infrastructure fluency — Docker, CI/CD, cloud deploy (AWS/GCP), reverse proxy, observability, prod hardening
 - **Challenges**: Wants senior-tier infra guidance to complement strong app-dev skills
 
@@ -55,12 +56,15 @@
 - **Deploy target**: Context-dependent. AWS when PDPA / data-residency compliance required (Malaysia PDPA); VPS/bare server when cost-sensitive and compliance not binding. Weigh compliance + cost per project.
 - **Containers**: Fluent in Docker Compose; evaluating Kubernetes for scaling.
 - **CI/CD**: GitHub Actions.
+- **Auth**: comfortable across JWT, OAuth2, and Keycloak — chosen per project; match the app's existing pattern, don't impose.
+- **Repo layout**: split repos — Spring Boot backend and Next.js frontend in separate repos (not monorepo).
+- **Domain**: varies per project — don't assume; confirm data sensitivity + PDPA scope per app before modeling.
 - **Database**: PostgreSQL primary; MongoDB where document model fits — polyglot persistence per use case.
 - **Endorsed reference arch (default for infra guidance, Mohamad approved 2026-07-10)**:
-  - **Tier A (PDPA / client / prod)**: React → static on S3 + CloudFront; Spring Boot → Docker → ECR → ECS Fargate behind ALB; RDS Postgres (ap-southeast, Multi-AZ) + Atlas/DocumentDB in-region; AWS Secrets Manager; CI/CD = GitHub Actions via OIDC; CloudWatch → Grafana/Loki later.
+  - **Tier A (PDPA / client / prod)**: Next.js (SSR) → containerize (Node) on ECS Fargate — or Vercel/Amplify if a PDPA-compliant region is available; static export to S3+CloudFront ONLY if the app has no SSR. Spring Boot → Docker → ECR → ECS Fargate behind ALB; RDS Postgres (ap-southeast, Multi-AZ) + Atlas/DocumentDB in-region; AWS Secrets Manager; CI/CD = GitHub Actions via OIDC; CloudWatch → Grafana/Loki later.
   - **Tier B (side project / internal / cost-first)**: single VPS (Hetzner/DO) + Docker Compose (Spring + Postgres + Mongo + Caddy auto-HTTPS).
   - **Fork rule**: personal data in scope? → Tier A, else Tier B.
-  - **Hard rules**: serve React off CDN, NOT from the Spring JAR; CI auth via OIDC, never long-lived AWS keys; managed DB > self-hosted for compliance/backups; skip Kubernetes until Fargate/Compose genuinely hurt.
+  - **Hard rules**: serve the frontend independently of the Spring JAR (Next.js SSR → own Node container / Vercel; static export → CDN); CI auth via OIDC, never long-lived AWS keys; managed DB > self-hosted for compliance/backups; skip Kubernetes until Fargate/Compose genuinely hurt.
 
 ### Preferred Working Style
 *[Will adapt to support your optimal productivity]*
