@@ -15,3 +15,6 @@ video-generation/*
 media-generation/*
 !media-generation/STORYBOARD-PROMPT-KIT.md
 projects/
+
+# macOS
+.DS_Store
